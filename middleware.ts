@@ -9,28 +9,9 @@ export async function middleware(req: NextRequest) {
     {
 cookies: {
   get: (n: string) => req.cookies.get(n)?.value,
-
-  set: (
-    n: string,
-    v: string,
-    o?: any
-  ) => res.cookies.set({
-    name: n,
-    value: v,
-    ...o,
-  }),
-
-  remove: (
-    n: string,
-    o?: any
-  ) => res.cookies.set({
-    name: n,
-    value: '',
-    ...o,
-  }),
+  set: (n: string, v: string, o: any) => res.cookies.set({ name: n, value: v, ...o }),
+  remove: (n: string, o: any) => res.cookies.set({ name: n, value: '', ...o }),
 },
-    }
-  );
   const { data: { user } } = await supabase.auth.getUser();
   const path = req.nextUrl.pathname;
   const guarded = path.startsWith('/lobby') || path.startsWith('/game') || path.startsWith('/admin');
