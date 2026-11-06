@@ -7,22 +7,38 @@ export function supabaseAuth() {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (n: string) => cookieStore.get(n)?.value, set: () => {}, remove: () => {} } }
+    {
+      cookies: {
+        get: (n: string) => cookieStore.get(n)?.value,
+        set: () => {},
+        remove: () => {},
+      },
+    }
   );
 }
 
-export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
+export function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
+
+export const supabaseAdmin = new Proxy({} as any, {
+  get(_t, prop) { return (getSupabaseAdmin() as any)[prop]; },
+});
 
 export async function requireAdmin() {
-  const auth = supabaseAuth();
-  const { data: { user } } = await auth.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabaseAdmin
-    .from('profiles').select('id,name,role,chips').eq('id', user.id).single();
-  if (!profile || profile.role !== 'admin') return null;
-  return { user, profile };
+  try {
+    const auth = supabaseAuth();
+    const { data: { user } } = await auth.auth.getUser();
+    if (!user) return null;
+    const { data: profile } = await getSupabaseAdmin()
+      .from('profiles').select('id,name,role,chips').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') return null;
+    return { user, profile };
+  } catch {
+    return null;
+  }
 }
