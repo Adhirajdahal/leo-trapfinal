@@ -16,7 +16,6 @@ export async function GET() {
     let { data: profile, error } = await admin
       .from('profiles').select('*').eq('id', user.id).single();
 
-    // If profile is missing (trigger didn't run), create it now
     if (error || !profile) {
       const name = user.user_metadata?.name || user.email?.split('@')[0] || 'Player';
       const { data: created, error: insErr } = await admin
